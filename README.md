@@ -69,6 +69,22 @@ EOF
 * 's/nginx/Google Cloud Platform - '"$HOSTNAME"'/': reemplaza la palabra "nginx" en el archivo con "Google Cloud Platform - $HOSTNAME", recordando que $HOSTNAME es una variable que contiene el nombre de la máquina virtual.
 * /var/www/html/index.nginx-debian.html: Es la página principal que se muestra cuando accedes a la IP de la VM.
 
+> [!NOTE]
+> ¿Qué es Nginx y para qué se usa?  
+> Nginx es un servidor web y proxy inverso.  
+> Servidor web: Es un software que escucha solicitudes HTTP y las responde enviando páginas web a los clientes (en sus navegadores).  
+> Proxy inverso: Es un intermediario que recibe peticiones y las reenvía a servidores internos. Se usa para balanceo de carga, seguridad y caché.    
+>
+>  Ejemplo:  
+> Si visitas www.ejemplo.com, el servidor web te envía la página.
+> Si hay muchas visitas, un proxy inverso reparte las solicitudes entre varios servidores para evitar sobrecargas.  
+>
+> En este caso:
+> * Nginx es el software del servidor web.
+> * Se instala en una máquina virtual (VM).
+> * Recibe peticiones HTTP de los usuarios y envía la página web solicitada.
+
+
 4. Crear un Template de Instancia
 > [!NOTE]
 > Un template de instancia es una plantilla que define la configuración base que van a tener las máquinas virtuales (VMs) a crear.
@@ -87,4 +103,34 @@ gcloud compute instance-templates create web-server-template \
 * --metadata-from-file startup-script=startup.sh: permite incluir un script de inicio (startup.sh, el cual fue creado en el paso 3, el paso anterior) que se ejecutará cuando una VM arranque. Este script permite instalar y configurar Nginx en la máquina virtual (MV).
 * --machine-type e2-medium: Define el tipo de máquina virtual (2 vCPUs y 4GB de RAM).
 * --region $REGION: Especifica la región donde se creará la instancia cuando se use el template.
+
+5. Crear de un Grupo de Instancias
+```
+gcloud compute instance-groups managed create web-server-group \
+        --base-instance-name web-server \
+        --size 2 \
+        --template web-server-template \
+        --region $REGION
+```
+
+Aquí se están creando un grupo de instancias gestionadas (Managed Instance Group, MIG). Se trata de un conjunto de máquinas virtuales que trabajan juntas como si fueran un solo sistema.  
+Se usa para escalar automáticamente ( si el tráfico aumenta, puede crear más VMs ;  si el tráfico baja, puede eliminar VMs para ahorrar costos).  
+Las VMs dentro del grupo se crean a partir del template que se definio en el paso anterior (Paso 4).  
+
+* web-server-group: Es el nombre del grupo de instancias.
+* --base-instance-name web-server: Define el prefijo de los nombres de las VMs. Si tiene varias instancias quedaría, por ejemplo, web-server-abc123 y web-server-def456
+* --size 2: Crea 2 instancias dentro del grupo.
+* --template web-server-template: Usa el template que creado antes (en el Paso 4) (web-server-template). Aquí es cuando se crean realmente las VMs, siguiendo la configuración del template.
+--region $REGION: Especifica en qué región se van a desplegar estas VMs.
+  
+Resumen:
+* Antes (Paso 4) se creó una plantilla (pero no VMs).
+* Ahora (Paso 5) se usa la plantilla para crear 2 VMs dentro de un grupo de instancias.
+
+6. 
+```
+gcloud compute firewall-rules create $FIREWALL \
+        --allow tcp:80 \
+        --network default
+```
 
