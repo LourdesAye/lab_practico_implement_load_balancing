@@ -16,10 +16,9 @@ export ZONE=us-east1-c
 > [!NOTE]
 > ¿Por qué definir zona y región?   
 > GCP divide su infraestructura en regiones (conjuntos de centros de datos) y dentro de cada región hay zonas.  
-> Por ejemplo: la región “us-central1” corresponde a una región en el centro de Estados Unidos que tiene las zonas us-central1-a, us-central1-b, us-central1-c y us-central1-f.  
-> Las instancias de máquinas virtuales y los discos persistentes se alojan en una zona.  
+> Por ejemplo: la región “us-central1” corresponde a una región en el centro de Estados Unidos que tiene las zonas us-central1-a, us-central1-b, us-central1-c y us-central1-f.
+> La zona determina en qué centro de datos específico se aloja la VM.    
 > Un disco persistente y una instancia de máquina virtual deben ubicarse en la misma zona para poder conectarlos.   
-> La zona determina en qué centro de datos específico se aloja la VM.  
 > Esto es importante por:  
 > Latencia y disponibilidad: Si tu app tiene usuarios en EE.UU., conviene elegir una zona cercana.  
 > Redundancia: Si un centro de datos falla, otras zonas pueden seguir funcionando.  
@@ -42,7 +41,7 @@ gcloud compute instances create $INSTANCE \
 
 > [!NOTE]
 > ¿Qué es e2-micro?  
-> Es un tipo de máquina con: 2 vCPUs compartidas y 1 GB de RAM. Adecuada para pruebas y pequeños servidores
+> Es un tipo de máquina con: 2 vCPUs compartidas y 1 GB de RAM. Adecuada para pruebas y pequeños servidores.
 
 3. Generar un script para crear y ejecutar un archivo de inicio llamado startup.sh, que va a permitir la instalación y configuración de Nginx en una máquina virtual.
 ```
@@ -70,7 +69,13 @@ EOF
 * 's/nginx/Google Cloud Platform - '"$HOSTNAME"'/': reemplaza la palabra "nginx" en el archivo con "Google Cloud Platform - $HOSTNAME", recordando que $HOSTNAME es una variable que contiene el nombre de la máquina virtual.
 * /var/www/html/index.nginx-debian.html: Es la página principal que se muestra cuando accedes a la IP de la VM.
 
-4. hbhdbcdbc
+4. Crear un Template de Instancia
+> [!NOTE]
+> Un template de instancia es una plantilla que define la configuración base que van a tener las máquinas virtuales (VMs) a crear.
+> No crea VMs, solo guarda la configuración para usarse después.
+> Permite crear múltiples VMs con la misma configuración de forma automática. Es decir, si se necesita escalar el número de servidores, se puede usar este template sin definir los parámetros una y otra vez.
+> 
+
 ```
 gcloud compute instance-templates create web-server-template \
         --metadata-from-file startup-script=startup.sh \
@@ -78,4 +83,8 @@ gcloud compute instance-templates create web-server-template \
         --region $REGION
 ```
 
+* web-server-template: Es el nombre del template (puede tener cualquier nombre).
+* --metadata-from-file startup-script=startup.sh: permite incluir un script de inicio (startup.sh, el cual fue creado en el paso 3, el paso anterior) que se ejecutará cuando una VM arranque. Este script permite instalar y configurar Nginx en la máquina virtual (MV).
+* --machine-type e2-medium: Define el tipo de máquina virtual (2 vCPUs y 4GB de RAM).
+* --region $REGION: Especifica la región donde se creará la instancia cuando se use el template.
 
