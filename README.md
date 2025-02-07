@@ -127,10 +127,137 @@ Resumen:
 * Antes (Paso 4) se creó una plantilla (pero no VMs).
 * Ahora (Paso 5) se usa la plantilla para crear 2 VMs dentro de un grupo de instancias.
 
-6. 
+6. Crear regla de firewall que permita tráfico HTTP en el puerto 80.
 ```
 gcloud compute firewall-rules create $FIREWALL \
         --allow tcp:80 \
         --network default
+```  
+Un firewall es un sistema de seguridad que filtra y controla el tráfico de red basado en reglas.  
+En Google Cloud hay un firewall predeterminado que bloquea casi todo el tráfico excepto SSH, RDP y ICMP.    
+El comando expresado permite crear una nueva regla para permitir tráfico HTTP en el puerto 80.  
+
+En Google Cloud Platform, cada cuenta tiene una red predeterminada llamada "default". Es la red en la que se crean todos los recursos (VMs, balanceadores de cargas, etcétera) en caso de no especificar otra.  
+Para ver las redes disponibles en GCP se puede usar: ```gcloud compute networks list```.  
+
+7. Crear un Health Check
+```gcloud compute http-health-checks create http-basic-check```    
+Un Health Check es una prueba automática que verifica si las VMs están funcionando (revisa si Nginx está respondiendo en HTTP). El health check envía solicitudes HTTP a cada VM. Si una VM responde correctamente, el balanceador sigue enviándole tráfico. Pero si una VM no responde o falla, el balanceador la deja de usar.  
+Ejemplo:  
+El health check revisa http://web-server-1/ cada 10 segundos.  
+Si devuelve 200 → ✅  → La VM está sana.  
+Si no responde  → ❌ →  Se saca del balanceador hasta que vuelva a responder.
+
+8. Configuración de puertos en las máquinas virtuales
 ```
+gcloud compute instance-groups managed \
+        set-named-ports web-server-group \
+        --named-ports http:80 \
+        --region $REGION
+```
+Este comando asigna un puerto lógico ("http") al puerto físico (80) en todas las máquinas virtuales del grupo de instancias (conjunto de VM que trabajan juntas como si fueran un solo sistema).
+Es necesario para que el balanceador de carga sepa a qué puerto enviar el tráfico.
+No cambia nada dentro de las VMs, solo las hace "descubribles" por el balanceador.
+
+* ```set-named-ports```: Asigna un nombre lógico ("http") a un puerto real (80).
+* ```web-server-group```: El grupo de instancias ((conjunto de máquinas virtuales que operan juntas como si se tratara de un solo sistema) donde se aplicará esta configuración.
+* ```--named-ports http:80 ```: Le dice a GCP que el servicio llamado "http" está en el puerto 80 de todas las instancias (de cada máquina virtual).
+* ```--region $REGION```: Se aplica a todas las VMs dentro de ese grupo en la región especificada.
+
+Este comando es importante porque:
+* le permite al balanceador de carga encontrar el puerto correcto en cada VM.
+* Hace que las VMs dentro del grupo sean accesibles mediante HTTP (puerto 80).
+* Facilita la administración de tráfico sin necesidad de configurar cada VM manualmente.
+
+9. Balanceador de carga
+Estos comandos configuran el balanceador de carga:
+1️⃣ Crear servicio backend
+```
+gcloud compute backend-services create web-server-backend \
+        --protocol HTTP \
+        --http-health-checks http-basic-check \
+        --global
+```
+📌 ¿Qué hace?
+Crea un backend (grupo de servidores) que servirá tráfico HTTP y usará el health check para verificar su estado.
+📌 ¿Es NGINX el backend?
+No exactamente.
+🔹 NGINX es el servidor web que corre dentro de cada VM.
+🔹 El backend es el conjunto de VMs que sirven el tráfico HTTP.
+
+📌 Piensa en NGINX como el motor de cada servidor individual, mientras que el "Backend Service" es el conjunto de servidores como una unidad.
+
+📌 🔍 Visualización del Flujo Completo
+Voy a explicarlo en pasos con una analogía.
+
+🖥️ 1️⃣ Un usuario hace una petición HTTP
+📌 Situación:
+Un usuario escribe en su navegador:
+
+arduino
+Copiar
+Editar
+http://mi-app.com
+y presiona Enter.
+
+🔹 Esto envía una solicitud HTTP al balanceador de carga.
+
+⚖️ 2️⃣ El balanceador de carga recibe la solicitud
+📌 Aquí entra el balanceador de carga
+Su trabajo es decidir a qué servidor enviar la solicitud.
+
+🔹 Pero el balanceador no se conecta directamente a las VMs, sino que primero consulta el Backend Service.
+
+📌 Piensa en el balanceador como un recepcionista en un restaurante grande que dirige a los clientes a la mesa correcta.
+
+🛠️ 3️⃣ El Backend Service decide a qué VM enviar la solicitud
+📌 Aquí entra el "Backend Service"
+🔹 Es un intermediario entre el balanceador de carga y las VMs.
+🔹 Sabe qué VMs están sanas (gracias al Health Check).
+🔹 Distribuye la carga entre las VMs activas.
+
+📌 Siguiendo la analogía del restaurante: El recepcionista (balanceador de carga) le pregunta al gerente de mesas (Backend Service) qué mesas están disponibles, y el gerente elige una.
+
+🌍 4️⃣ El backend redirige la solicitud a una de las VMs
+📌 Finalmente, la solicitud llega a una VM
+🔹 Cada VM tiene NGINX instalado (gracias al script de inicio).
+🔹 NGINX responde con la página web que el usuario quiere ver.
+
+📌 En la analogía: El cliente llega a su mesa y el mesero (NGINX) le sirve la comida (la página web).
+
+📌 🔍 Diagrama del flujo completo
+scss
+Copiar
+Editar
+[ Usuario en navegador ]  
+        │  
+        ▼  
+[ Balanceador de carga ]  ⬅ 🌐 La solicitud HTTP llega aquí  
+        │  
+        ▼  
+[ Backend Service ]  ⬅ 📌 Decide qué VM responderá  
+        │  
+        ▼  
+[ Grupo de VMs ]  
+    ├── VM 1 (con NGINX) ✅  
+    ├── VM 2 (con NGINX) ✅  
+    ├── VM 3 (con NGINX) ❌ (falló el health check)  
+        │  
+        ▼  
+[ Respuesta enviada al usuario ]  
+📌 Resumen Final
+✅ NGINX es un servidor web en cada VM.
+✅ El backend es el grupo de VMs que atienden tráfico HTTP.
+✅ El balanceador de carga no habla directamente con las VMs, lo hace a través del Backend Service.
+✅ El Backend Service decide cuál VM responde la solicitud.
+✅ El Health Check mantiene el sistema funcionando solo con VMs activas.
+
+🎯 ¿Lo ves más claro ahora?
+Si hay alguna parte en la que todavía hay dudas, dime y la repasamos. 🚀
+
+
+
+
+
+
 
