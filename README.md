@@ -184,56 +184,32 @@ Un Backend Service NO es un servidor físico ni una VM, sino una configuración 
 * --global: servicio de backend está disponible en todas las regiones.
 
 10. Agregar el grupo de instancias (VMs que trabajan juntas) al backend. 
-Recordatorio: Un grupo de instancias es un conjunto de VMs gestionadas juntas, permitiendo escalabilidad y alta disponibilidad * Si el tráfico aumenta, puede crear más VMs ; Si el tráfico baja, puede eliminar VMs para ahorrar costos) 
+> [!NOTE]
+> Un grupo de instancias es un conjunto de VMs gestionadas juntas, permitiendo escalabilidad y alta disponibilidad:
+> * Si el tráfico aumenta, puede crear más VMs
+> * Si el tráfico baja, puede eliminar VMs para ahorrar costos
 ```
 gcloud compute backend-services add-backend web-server-backend \
         --instance-group web-server-group \
         --instance-group-region $REGION \
         --global
 ```
-🔹 El web-server-backend es la configuración lógica que maneja el tráfico.
-🔹 El web-server-group es el grupo de instancias (las VMs con NGINX).
-🔹 --instance-group-region $REGION indica la región donde están las VMs.
-🔹 --global confirma que el backend service es global.
+* El web-server-backend es la configuración lógica del tráfico.
+* El web-server-group es el grupo de instancias (las VMs con NGINX).
+* --instance-group-region $REGION indica la región donde están las VMs.
+* --global confirma que el backend service es global.
 
-Antes, creamos el Backend Service (web-server-backend), pero estaba vacío. 
-Con este comando, le estamos diciendo qué VMs usar para responder tráfico.
+En el paso anterior (Paso 9) se creó el Backend Service (web-server-backend).  
+Ahora (Paso 10), se le indica cuáles son las VMs a usar para responder tráfico.
+Se le esta indicando al backend que su "backend real" (quien va a recibir las solicitudes HTTP) es el grupo de instancias (VMs).
 
- Le decimos al backend que su "backend real" (quien va a recibir las solicitudes HTTP) es el grupo de instancias.
-📌 ¿Qué hace?
-Añade el grupo de instancias (web-server-group) al backend para que las VMs reciban tráfico.
+Ejemplo de flujo hasta el moemnto:
+1. Un usuario escribe en su navegador: http://mi-app.com . Esto envía una solicitud HTTP al balanceador de carga.
+2. El balanceador de carga recibe la solicitud y su trabajo es decidir a qué servidor enviar la solicitud. Pero el balanceador no se conecta directamente a las VMs, sino que primero consulta el Backend Service.
+3. El Backend Service decide a qué VM enviar la solicitud. Es un intermediario entre el balanceador de carga y las VMs. Sabe qué VMs están sanas (gracias al Health Check). Distribuye la carga entre las VMs activas.
+4. La solicitud llega a una VM. Cada VM tiene NGINX instalado (gracias al script de inicio). NGINX responde con la página web que el usuario quiere ver.
 
-📌 Situación:
-Un usuario escribe en su navegador: http://mi-app.com 
-Esto envía una solicitud HTTP al balanceador de carga.
-El balanceador de carga recibe la solicitud y su trabajo es decidir a qué servidor enviar la solicitud.
-Pero el balanceador no se conecta directamente a las VMs, sino que primero consulta el Backend Service.
-El Backend Service decide a qué VM enviar la solicitud. Es un intermediario entre el balanceador de carga y las VMs. Sabe qué VMs están sanas (gracias al Health Check). Distribuye la carga entre las VMs activas.
-Finalmente, la solicitud llega a una VM. Cada VM tiene NGINX instalado (gracias al script de inicio). NGINX responde con la página web que el usuario quiere ver.
-
-[ Usuario en navegador ]  
-        │  
-        ▼  
-[ Balanceador de carga ] 
-        │  
-        ▼  
-[ Backend Service ] 
-        │  
-        ▼  
-[ Grupo de VMs ]  
-    ├── VM 1 (con NGINX) ✅  
-    ├── VM 2 (con NGINX) ✅  
-    ├── VM 3 (con NGINX) ❌ (falló el health check)  
-        │  
-        ▼  
-[ Respuesta enviada al usuario ]  
-
-
-✅ NGINX es un servidor web en cada VM.
-✅ El backend es el grupo de VMs que atienden tráfico HTTP.
-✅ El balanceador de carga no habla directamente con las VMs, lo hace a través del Backend Service.
-✅ El Backend Service decide cuál VM responde la solicitud.
-✅ El Health Check mantiene el sistema funcionando solo con VMs activas.
+El esquema sería: Usuario en navegador -> Balanceador de carga  ->  Backend Service -> Grupo de VMs: VM 1 (con NGINX) ✅ , VM 2 (con NGINX) ✅ , VM 3 (con NGINX) ❌ (falló el health check)  ->  VM 2 (con NGINX) ✅  ->  Respuesta enviada al usuario. 
 
 
 
