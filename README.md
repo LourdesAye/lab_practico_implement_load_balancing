@@ -139,11 +139,16 @@ El comando expresado permite crear una nueva regla para permitir tráfico HTTP e
 
 En Google Cloud Platform, cada cuenta tiene una red predeterminada llamada "default". Es la red en la que se crean todos los recursos (VMs, balanceadores de cargas, etcétera) en caso de no especificar otra.  
 Para ver las redes disponibles en GCP se puede usar:   
-```gcloud compute networks list```.  
+```
+gcloud compute networks list
+```  
 
-7. Crear un Health Check  
-```gcloud compute http-health-checks create http-basic-check```      
-Un Health Check es una prueba automática que verifica si las VMs están funcionando (revisa si Nginx está respondiendo en HTTP). El health check envía solicitudes HTTP a cada VM. Si una VM responde correctamente, el balanceador sigue enviándole tráfico. Pero si una VM no responde o falla, el balanceador la deja de usar.  
+7. Crear un Health Check   
+```
+gcloud compute http-health-checks create http-basic-check
+```          
+Un Health Check es una prueba automática que verifica si las VMs están funcionando (revisa si Nginx está respondiendo en HTTP). El health check envía solicitudes HTTP a cada VM. Si una VM responde correctamente, el balanceador sigue enviándole tráfico. Pero si una VM no responde o falla, el balanceador la deja de usar. 
+
 Ejemplo:  
 El health check revisa http://web-server-1/ cada 10 segundos.  
 Si devuelve 200 → ✅  → La VM está sana.  
@@ -161,7 +166,7 @@ Es necesario para que el balanceador de carga sepa a qué puerto enviar el tráf
 No cambia nada dentro de las VMs, solo las hace "descubribles" por el balanceador.
 
 * ```set-named-ports```: Asigna un nombre lógico ("http") a un puerto real (80).
-* ```web-server-group```: El grupo de instancias ((conjunto de máquinas virtuales que operan juntas como si se tratara de un solo sistema) donde se aplicará esta configuración.
+* ```web-server-group```: El grupo de instancias (conjunto de máquinas virtuales que operan juntas como si se tratara de un solo sistema) donde se aplicará esta configuración.
 * ```--named-ports http:80 ```: Le dice a GCP que el servicio llamado "http" está en el puerto 80 de todas las instancias (de cada máquina virtual).
 * ```--region $REGION```: Se aplica a todas las VMs dentro de ese grupo en la región especificada.
 
@@ -200,16 +205,34 @@ gcloud compute backend-services add-backend web-server-backend \
 * --global confirma que el backend service es global.
 
 En el paso anterior (Paso 9) se creó el Backend Service (web-server-backend).  
-Ahora (Paso 10), se le indica cuáles son las VMs a usar para responder tráfico.
+Ahora, se le indica cuáles son las VMs a usar para responder tráfico.
 Se le esta indicando al backend que su "backend real" (quien va a recibir las solicitudes HTTP) es el grupo de instancias (VMs).
 
-Ejemplo de flujo hasta el moemnto:
+Ejemplo de flujo hasta el momento:
 1. Un usuario escribe en su navegador: http://mi-app.com . Esto envía una solicitud HTTP al balanceador de carga.
 2. El balanceador de carga recibe la solicitud y su trabajo es decidir a qué servidor enviar la solicitud. Pero el balanceador no se conecta directamente a las VMs, sino que primero consulta el Backend Service.
 3. El Backend Service decide a qué VM enviar la solicitud. Es un intermediario entre el balanceador de carga y las VMs. Sabe qué VMs están sanas (gracias al Health Check). Distribuye la carga entre las VMs activas.
 4. La solicitud llega a una VM. Cada VM tiene NGINX instalado (gracias al script de inicio). NGINX responde con la página web que el usuario quiere ver.
 
 El esquema sería: Usuario en navegador -> Balanceador de carga  ->  Backend Service -> Grupo de VMs: VM 1 (con NGINX) ✅ , VM 2 (con NGINX) ✅ , VM 3 (con NGINX) ❌ (falló el health check)  ->  VM 2 (con NGINX) ✅  ->  Respuesta enviada al usuario. 
+
+11.  Crear un URL map
+```
+gcloud compute url-maps create web-server-map \
+        --default-service web-server-backend
+```
+* gcloud compute url-maps create: Comando para crear un URL Map en GCP.
+* web-server-map: Nombre del URL Map que estamos creando.
+* --default-service web-server-backend: Indica que todas las solicitudes se enviarán a web-server-backend (nuestro servicio de backend con las VMs).
+
+Con esta instrucción se le indica al balanceador de cargas que cualquier solicitud debe enviarse a web-server-backend (Backend Service). 
+El Backend Service redirige tráfico a `web-server-group` (conjunto de VMs que trabajan juntas conformando un solo sistema), para que una VM responde la solicitud HTTP.
+
+12. Crear un proxy HTTP.
+¿Qué hace?
+Crea un proxy que recibe peticiones HTTP y las reenvía al URL map. ✔ Proxy inverso: Es un intermediario que recibe peticiones y las reenvía a servidores internos. Se usa para balanceo de carga, seguridad y caché.  Si hay muchas visitas, un proxy inverso reparte las solicitudes entre varios servidores para evitar sobrecargas. ¿Qué es nginx y para qué se usa?
+Nginx es un servidor web y proxy inverso. En este caso, se usa para servir una página web en la VM.
+
 
 
 
