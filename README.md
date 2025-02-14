@@ -43,7 +43,13 @@ gcloud compute instances create $INSTANCE \
 > ¿Qué es e2-micro?  
 > Es un tipo de máquina con: 2 vCPUs compartidas y 1 GB de RAM. Adecuada para pruebas y pequeños servidores.
 
-3. Generar un script para crear y ejecutar un archivo de inicio llamado startup.sh, que va a permitir la instalación y configuración de Nginx en una máquina virtual.
+3. Verificar las máquinas virtuales (VMs) creadas.
+```
+gcloud compute instances list
+```
+sus IPs, estado y zona.gcloud compute instances list
+
+5. Generar un script para crear y ejecutar un archivo de inicio llamado startup.sh, que va a permitir la instalación y configuración de Nginx en una máquina virtual.
 ```
 cat << EOF > startup.sh
 #! /bin/bash
@@ -127,6 +133,17 @@ Resumen:
 * Antes (Paso 4) se creó una plantilla (pero no VMs).
 * Ahora (Paso 5) se usa la plantilla para crear 2 VMs dentro de un grupo de instancias.
 
+6.  Verificar que se creó el grupo de VMs
+Aca se utilizan dos comandos:
+```
+gcloud compute instances list
+```
+* Muestra todas las máquinas virtuales (VMs) creadas, sus IPs, estado y zona.
+```
+gcloud compute instance-groups managed list
+```
+* Confirma que el grupo de VMs fue creado correctamente.
+
 6. Crear regla de firewall que permita tráfico HTTP en el puerto 80.
 ```
 gcloud compute firewall-rules create $FIREWALL \
@@ -153,6 +170,12 @@ Ejemplo:
 El health check revisa http://web-server-1/ cada 10 segundos.  
 Si devuelve 200 → ✅  → La VM está sana.  
 Si no responde  → ❌ →  Se saca del balanceador hasta que vuelva a responder.
+
+8. Verificar el estado del Health Check:
+```
+gcloud compute health-checks list
+```
+* Muestra si las VMs están saludables (si NGINX responde bien).
 
 8. Configurar los puertos en las máquinas virtuales
 ```
@@ -216,6 +239,12 @@ Ejemplo de flujo hasta el momento:
 
 El esquema sería: Usuario en navegador -> Balanceador de carga  ->  Backend Service -> Grupo de VMs: VM 1 (con NGINX) ✅ , VM 2 (con NGINX) ✅ , VM 3 (con NGINX) ❌ (falló el health check)  ->  VM 2 (con NGINX) ✅  ->  Respuesta enviada al usuario. 
 
+11. Verificar los servicios de backend
+```
+gcloud compute backend-services list
+```
+* Indica si el backend está bien configurado y vinculado al balanceador.
+
 11.  Crear un URL map
 ```
 gcloud compute url-maps create web-server-map \
@@ -242,7 +271,31 @@ gcloud compute target-http-proxies create http-lb-proxy \
 * http-lb-proxy: Nombre del proxy HTTP que estamos creando.
 * --url-map web-server-map: Le indica al proxy qué URL MAP usar para decidir cómo enrutar el tráfico (es decir, para indicar a dónde denen llegar las solicitudes).
 
-13. 
+13.  Crear la regla de reenvío (forwarding rule)
+```
+gcloud compute create http-content-rule \
+      --global \
+      --target-http-proxy http-lb-proxy \
+      --ports 80
+```
+* forwarding-rules create: crea una regla de reenvío en GCP.
+* http-content-rule: nombre de la regla de reenvío.
+* --global: la regla es global (funciona en múltiples regiones).
+* --target-http-proxy http-lb-proxy: indica que el tráfico debe ser manejado por el proxy HTTP que se creo antes.
+* --ports 80: especifica que esta regla aplica a tráfico HTTP (puerto 80).
+
+Con este comando se está definiendo la regla de forwarding (de reenvío) que decide a dónde debe ir el tráfico entrante (al proxy HTTP : http-lb-proxy). También, epecifica que este tráfico entrará por el puerto 80 (HTTP).
+("Si alguien entra al sitio web en el puerto 80, envíra su solicitud al proxy http-lb-proxy para que la procese.")
+
+14. Verificar la configuración de reglas de reenvío (qué tráfico se dirige a dónde).
+```
+gcloud compute forwarding-rules list
+```
+Con esta instrucción, se muestran todas las reglas de forwarding creadas en GCP.Por lo tanto, permite verificar que la regla http-content-rule se creó correctamente.
+* Indica qué tráfico posible hay y a dónde se dirige. 
+
+
+
 
 
 
