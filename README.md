@@ -43,12 +43,6 @@ gcloud compute instances create $INSTANCE \
 > ¿Qué es e2-micro?  
 > Es un tipo de máquina con: 2 vCPUs compartidas y 1 GB de RAM. Adecuada para pruebas y pequeños servidores.
 
-3. Verificar las máquinas virtuales (VMs) creadas.
-```
-gcloud compute instances list
-```
-sus IPs, estado y zona.gcloud compute instances list
-
 5. Generar un script para crear y ejecutar un archivo de inicio llamado startup.sh, que va a permitir la instalación y configuración de Nginx en una máquina virtual.
 ```
 cat << EOF > startup.sh
@@ -133,17 +127,6 @@ Resumen:
 * Antes (Paso 4) se creó una plantilla (pero no VMs).
 * Ahora (Paso 5) se usa la plantilla para crear 2 VMs dentro de un grupo de instancias.
 
-6.  Verificar que se creó el grupo de VMs
-Aca se utilizan dos comandos:
-```
-gcloud compute instances list
-```
-* Muestra todas las máquinas virtuales (VMs) creadas, sus IPs, estado y zona.
-```
-gcloud compute instance-groups managed list
-```
-* Confirma que el grupo de VMs fue creado correctamente.
-
 6. Crear regla de firewall que permita tráfico HTTP en el puerto 80.
 ```
 gcloud compute firewall-rules create $FIREWALL \
@@ -155,10 +138,6 @@ En Google Cloud hay un firewall predeterminado que bloquea casi todo el tráfico
 El comando expresado permite crear una nueva regla para permitir tráfico HTTP en el puerto 80.  
 
 En Google Cloud Platform, cada cuenta tiene una red predeterminada llamada "default". Es la red en la que se crean todos los recursos (VMs, balanceadores de cargas, etcétera) en caso de no especificar otra.  
-Para ver las redes disponibles en GCP se puede usar:   
-```
-gcloud compute networks list
-```  
 
 7. Crear un Health Check   
 ```
@@ -170,12 +149,6 @@ Ejemplo:
 El health check revisa http://web-server-1/ cada 10 segundos.  
 Si devuelve 200 → ✅  → La VM está sana.  
 Si no responde  → ❌ →  Se saca del balanceador hasta que vuelva a responder.
-
-8. Verificar el estado del Health Check:
-```
-gcloud compute health-checks list
-```
-* Muestra si las VMs están saludables (si NGINX responde bien).
 
 8. Configurar los puertos en las máquinas virtuales
 ```
@@ -238,12 +211,6 @@ Ejemplo de flujo hasta el momento:
 4. La solicitud llega a una VM. Cada VM tiene NGINX instalado (gracias al script de inicio). NGINX responde con la página web que el usuario quiere ver.
 
 El esquema sería: Usuario en navegador -> Balanceador de carga  ->  Backend Service -> Grupo de VMs: VM 1 (con NGINX) ✅ , VM 2 (con NGINX) ✅ , VM 3 (con NGINX) ❌ (falló el health check)  ->  VM 2 (con NGINX) ✅  ->  Respuesta enviada al usuario. 
-
-11. Verificar los servicios de backend
-```
-gcloud compute backend-services list
-```
-* Indica si el backend está bien configurado y vinculado al balanceador.
 
 11.  Crear un URL map
 ```
