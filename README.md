@@ -222,16 +222,29 @@ gcloud compute url-maps create web-server-map \
         --default-service web-server-backend
 ```
 * gcloud compute url-maps create: Comando para crear un URL Map en GCP.
-* web-server-map: Nombre del URL Map que estamos creando.
+* web-server-map: Nombre del URL Map que se esta creando.
 * --default-service web-server-backend: Indica que todas las solicitudes se enviarán a web-server-backend (nuestro servicio de backend con las VMs).
 
 Con esta instrucción se le indica al balanceador de cargas que cualquier solicitud debe enviarse a web-server-backend (Backend Service). 
-El Backend Service redirige tráfico a `web-server-group` (conjunto de VMs que trabajan juntas conformando un solo sistema), para que una VM responde la solicitud HTTP.
+El Backend Service redirige tráfico a `web-server-group` (conjunto de VMs que trabajan juntas conformando un solo sistema), para que una VM responda la solicitud HTTP.
 
-12. Crear un proxy HTTP.
-¿Qué hace?
-Crea un proxy que recibe peticiones HTTP y las reenvía al URL map. ✔ Proxy inverso: Es un intermediario que recibe peticiones y las reenvía a servidores internos. Se usa para balanceo de carga, seguridad y caché.  Si hay muchas visitas, un proxy inverso reparte las solicitudes entre varios servidores para evitar sobrecargas. ¿Qué es nginx y para qué se usa?
-Nginx es un servidor web y proxy inverso. En este caso, se usa para servir una página web en la VM.
+12. Crear un proxy inverso HTTP.
+> [!NOTE]
+> Proxy inverso: Es un intermediario que recibe solicitudes y las reenvía o distribuye entre los servidores internos
+> (en este caso, sobre el Backend Service). 
+
+```
+gcloud compute target-http-proxies create http-lb-proxy \
+        --url-map web-server-map
+```
+
+* target-http-proxies create : Crea un proxy HTTP en GCP.
+* http-lb-proxy: Nombre del proxy HTTP que estamos creando.
+* --url-map web-server-map: Le indica al proxy qué URL MAP usar para decidir cómo enrutar el tráfico (es decir, para indicar a dónde denen llegar las solicitudes).
+
+13. 
+
+
 
 
 
