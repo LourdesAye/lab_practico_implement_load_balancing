@@ -14,7 +14,8 @@ export ZONE=us-east1-c
 * REGION y ZONE definen la ubicación donde se ejecutarán los recursos en GCP.
 
 > [!NOTE]
-> ¿Por qué definir zona y región?   
+> 1. Los valores de las variables de entorno son proporcionadas por el laboratorio al momento de su realización.
+> 2. ¿Por qué definir zona y región?   
 > GCP divide su infraestructura en regiones (conjuntos de centros de datos) y dentro de cada región hay zonas.  
 > Por ejemplo: la región “us-central1” corresponde a una región en el centro de Estados Unidos que tiene las zonas us-central1-a, us-central1-b, us-central1-c y us-central1-f.
 > La zona determina en qué centro de datos específico se aloja la VM.    
@@ -23,10 +24,6 @@ export ZONE=us-east1-c
 > Latencia y disponibilidad: Si tu app tiene usuarios en EE.UU., conviene elegir una zona cercana.  
 > Redundancia: Si un centro de datos falla, otras zonas pueden seguir funcionando.  
 > Información sobre las regiones y zonas: [Regiones](https://cloud.google.com/docs/geography-and-regions?hl=es-419) y [Zonas](https://cloud.google.com/compute/docs/regions-zones?hl=es-419)  
-
-
-> [!NOTE]
-> Los valores de las variables de entorno son proporcionadas por el laboratorio al momento de su realización.
 
 2. Creación de una Máquina Virtual (VM) en Google Cloud: 
 ```
@@ -43,7 +40,7 @@ gcloud compute instances create $INSTANCE \
 > ¿Qué es e2-micro?  
 > Es un tipo de máquina con: 2 vCPUs compartidas y 1 GB de RAM. Adecuada para pruebas y pequeños servidores.
 
-5. Generar un script para crear y ejecutar un archivo de inicio llamado startup.sh, que va a permitir la instalación y configuración de Nginx en una máquina virtual.
+3. Generar un script para crear y ejecutar un archivo de inicio llamado startup.sh, que va a permitir la instalación y configuración de Nginx en una máquina virtual.
 ```
 cat << EOF > startup.sh
 #! /bin/bash
@@ -86,12 +83,6 @@ EOF
 
 
 4. Crear un Template de Instancia
-> [!NOTE]
-> Un template de instancia es una plantilla que define la configuración base que van a tener las máquinas virtuales (VMs) a crear.
-> No crea VMs, solo guarda la configuración para usarse después.
-> Permite crear múltiples VMs con la misma configuración de forma automática. Es decir, si se necesita escalar el número de servidores, se puede usar este template sin definir los parámetros una y otra vez.
-> 
-
 ```
 gcloud compute instance-templates create web-server-template \
         --metadata-from-file startup-script=startup.sh \
@@ -102,7 +93,12 @@ gcloud compute instance-templates create web-server-template \
 * web-server-template: Es el nombre del template (puede tener cualquier nombre).
 * --metadata-from-file startup-script=startup.sh: permite incluir un script de inicio (startup.sh, el cual fue creado en el paso 3, el paso anterior) que se ejecutará cuando una VM arranque. Este script permite instalar y configurar Nginx en la máquina virtual (MV).
 * --machine-type e2-medium: Define el tipo de máquina virtual (2 vCPUs y 4GB de RAM).
-* --region $REGION: Especifica la región donde se creará la instancia cuando se use el template.
+* --region $REGION: Especifica la región donde se creará la instancia cuando se use el template.\
+
+> [!NOTE]
+> Un template de instancia es una plantilla que define la configuración base que van a tener las máquinas virtuales (VMs) a crear.
+> No crea VMs, solo guarda la configuración para usarse después.
+> Permite crear múltiples VMs con la misma configuración de forma automática. Es decir, si se necesita escalar el número de servidores, se puede usar este template sin definir los parámetros una y otra vez.
 
 5. Crear de un Grupo de Instancias
 ```
@@ -185,10 +181,6 @@ Un Backend Service NO es un servidor físico ni una VM, sino una configuración 
 * --global: servicio de backend está disponible en todas las regiones.
 
 10. Agregar el grupo de instancias (VMs que trabajan juntas) al backend. 
-> [!NOTE]
-> Un grupo de instancias es un conjunto de VMs gestionadas juntas, permitiendo escalabilidad y alta disponibilidad:
-> * Si el tráfico aumenta, puede crear más VMs
-> * Si el tráfico baja, puede eliminar VMs para ahorrar costos
 ```
 gcloud compute backend-services add-backend web-server-backend \
         --instance-group web-server-group \
@@ -212,6 +204,11 @@ Ejemplo de flujo hasta el momento:
 
 El esquema sería: Usuario en navegador -> Balanceador de carga  ->  Backend Service -> Grupo de VMs: VM 1 (con NGINX) ✅ , VM 2 (con NGINX) ✅ , VM 3 (con NGINX) ❌ (falló el health check)  ->  VM 2 (con NGINX) ✅  ->  Respuesta enviada al usuario. 
 
+> [!NOTE]
+> Un grupo de instancias es un conjunto de VMs gestionadas juntas, permitiendo escalabilidad y alta disponibilidad:
+> * Si el tráfico aumenta, puede crear más VMs
+> * Si el tráfico baja, puede eliminar VMs para ahorrar costos
+
 11.  Crear un URL map
 ```
 gcloud compute url-maps create web-server-map \
@@ -225,10 +222,6 @@ Con esta instrucción se le indica al balanceador de cargas que cualquier solici
 El Backend Service redirige tráfico a `web-server-group` (conjunto de VMs que trabajan juntas conformando un solo sistema), para que una VM responda la solicitud HTTP.
 
 12. Crear un proxy inverso HTTP.
-> [!NOTE]
-> Proxy inverso: Es un intermediario que recibe solicitudes y las reenvía o distribuye entre los servidores internos
-> (en este caso, sobre el Backend Service). 
-
 ```
 gcloud compute target-http-proxies create http-lb-proxy \
         --url-map web-server-map
@@ -238,9 +231,13 @@ gcloud compute target-http-proxies create http-lb-proxy \
 * http-lb-proxy: Nombre del proxy HTTP que estamos creando.
 * --url-map web-server-map: Le indica al proxy qué URL MAP usar para decidir cómo enrutar el tráfico (es decir, para indicar a dónde denen llegar las solicitudes).
 
+> [!NOTE]
+> Proxy inverso: Es un intermediario que recibe solicitudes y las reenvía o distribuye entre los servidores internos
+> (en este caso, sobre el Backend Service). 
+
 13.  Crear la regla de reenvío (forwarding rule)
 ```
-gcloud compute create http-content-rule \
+gcloud compute create forwarding-rules create http-content-rule \
       --global \
       --target-http-proxy http-lb-proxy \
       --ports 80
@@ -254,22 +251,8 @@ gcloud compute create http-content-rule \
 Con este comando se está definiendo la regla de forwarding (de reenvío) que decide a dónde debe ir el tráfico entrante (al proxy HTTP : http-lb-proxy). También, epecifica que este tráfico entrará por el puerto 80 (HTTP).
 ("Si alguien entra al sitio web en el puerto 80, envíra su solicitud al proxy http-lb-proxy para que la procese.")
 
-14. Verificar la configuración de reglas de reenvío (qué tráfico se dirige a dónde).
+14. Verificar la configuración de reglas de reenvío (qué tráfico se dirige y hacia dónde).
 ```
 gcloud compute forwarding-rules list
 ```
 Con esta instrucción, se muestran todas las reglas de forwarding creadas en GCP.Por lo tanto, permite verificar que la regla http-content-rule se creó correctamente.
-* Indica qué tráfico posible hay y a dónde se dirige. 
-
-
-
-
-
-
-
-
-
-
-
-
-
