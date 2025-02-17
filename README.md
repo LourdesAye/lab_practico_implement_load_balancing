@@ -13,10 +13,10 @@ Definición de Google : *" The job of a load balancer is to distribute user traf
 ![Definición de Load Balancer por Google](https://github.com/user-attachments/assets/fadbcc68-ef1d-479c-b09c-b7c82a8cea9f)
 
 En este caso, es un servicio brindado por Google Cloud Platform, compuesto por:
-* Forwarding Rule (recibe el tráfico HTTP (puerto 80) e indica hacia dónde enviarlo: al proxy inverso HTTP. No decide directamente a qué VM o backend va el tráfico, esa decisión la toma el proxy y el URL Map.)
-* Proxy HTTP (recibe las peticiones HTTP y las reenvía al URL MAP, es un puente entre el balanceador de carga y los Servidores del Backend).
-* URL Map (indica a dónde deben llegar las solicitudes, en este caso al Backend Service)
-* Backend Service (Capa lógica que le dice al balanceador cómo distribuir el tráfico entre las VMs). 
+* **Forwarding Rule** (recibe el tráfico HTTP (puerto 80) e indica hacia dónde enviarlo: al proxy inverso HTTP. No decide directamente a qué VM o backend va el tráfico, esa decisión la toma el proxy y el URL Map.)
+* **Proxy HTTP** (recibe las peticiones HTTP y las reenvía al URL MAP, es un puente entre el balanceador de carga y los Servidores del Backend).
+* **URL Map** (indica a dónde deben llegar las solicitudes, en este caso al Backend Service)
+* **Backend Service** (Capa lógica que le dice al balanceador cómo distribuir el tráfico entre las VMs). 
 
 ## Descripción general de las tareas a realizar en el Lab
 Las tareas que se llevaron adelante: 
@@ -40,22 +40,22 @@ service nginx start
 sed -i -- 's/nginx/Google Cloud Platform - '"\$HOSTNAME"'/' /var/www/html/index.nginx-debian.html
 EOF
 ```
-* Crear una plantilla de instancias (consiste en establecer la configuración de un conjunto de máquinas virtuales, que van a trabajar juntas como si fueran un único sistema, a aprtir del script).
-* Crear un grupo de instancias administrado basado en la plantilla (Consiste en crear un grupo de instancias de máquinas virtuales a partir de la plantilla anterior).
-* Crear una regla de firewall para permitir el tráfico (80/tcp). Notar que en Google Cloud Platform ya se tiene un Firewall con una configuración predeterminada y hay que ajustarla a las necesidades.
-* Crear una verificación de estado (Healt Check). Consiste en una prueba automatizada que verifica si las máquinas virtuales están funcionando (si NGINX responde HTTP).
-* Crea un servicio de backend (capa lógica que abstrae al Backend Real) y agrega tu grupo de instancias (máquinas virtuales) como backend al grupo de servicios de backend con el puerto nombrado (http:80). Es decir, hay que configurar los puertos de las máquinas virtuales para que sean visibles por el balanceador de cargas, crear el Servicio de Backend, agregar las máquinas virtuales al Service Backend.
-* Crear un mapa de URL y un proxy inverso HTTP, asociarlos y enrutar las solicitudes entrantes al servicio de backend.
-* Crea una regla de reenvío (indica a dónde debe ir el tráfico que le llega al balanceador de cargas).
+* **Crear una plantilla de instancias** (consiste en establecer la configuración de un conjunto de máquinas virtuales, que van a trabajar juntas como si fueran un único sistema, a aprtir del script).
+* **Crear un grupo de instancias administrado basado en la plantilla** (Consiste en crear un grupo de instancias de máquinas virtuales a partir de la plantilla anterior).
+* **Crear una regla de firewall para permitir el tráfico (80/tcp)**. Notar que en Google Cloud Platform ya se tiene un Firewall con una configuración predeterminada y hay que ajustarla a las necesidades.
+* **Crear una verificación de estado (Health Check)**. Consiste en una prueba automatizada que verifica si las máquinas virtuales están funcionando (si NGINX responde HTTP).
+* **Crea un servicio de backend (capa lógica que abstrae al Backend Real) y agrega tu grupo de instancias (máquinas virtuales) como backend al grupo de servicios de backend con el puerto nombrado (http:80)**. Es decir, hay que configurar los puertos de las máquinas virtuales para que sean visibles por el balanceador de cargas, crear el Servicio de Backend, agregar las máquinas virtuales al Service Backend.
+* **Crear un mapa de URL y un proxy inverso HTTP, asociarlos y enrutar las solicitudes entrantes al servicio de backend.**
+* **Crea una regla de reenvío** (indica a dónde debe ir el tráfico que le llega al balanceador de cargas).
 
 Flujo:
 1.	Usuario en navegador haciendo las peticiones HTTP (ingresar a un sitio web) 
 2.	Ahora entra en acción el Balanceador de carga:
-    1.	forwarding rule: Recibe la solicitud HTTP y la pasa al proxy inverso HTTP
-    2.	proxy inverso HTTP: consulta el URL Map para ver a dónde debe ir el tráfico. 
-    3.	URL MAP: dice que la solicitud debe ir al Backend Service.
-    4.	Backend Service: distribuye el tráfico a las VMs.
-3.	Grupo de VMs que ejecutan NGINX y que responden con la página web (a ellas se les aplica el Healt Check para verificar si funcionan de manera adecuada): 
+    1.	**Forwarding Rule**: Recibe la solicitud HTTP y la pasa al proxy inverso HTTP
+    2.	**Proxy Inverso HTTP**: consulta el URL Map para ver a dónde debe ir el tráfico. 
+    3.	**URL Map**: dice que la solicitud debe ir al Backend Service.
+    4.	**Backend Service**: distribuye el tráfico a las VMs.
+3.	Grupo de VMs que ejecutan NGINX y que responden con la página web (a ellas se les aplica el Health Check para verificar si funcionan de manera adecuada): 
     1.	VM 1 (con NGINX)  
     2.	VM 2 (con NGINX)
 4.	Se selecciona a una VM que se encarga de responder al usuario.
