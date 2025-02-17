@@ -44,7 +44,7 @@ EOF
 * **Crear un grupo de instancias administrado basado en la plantilla** (Consiste en crear un grupo de instancias de máquinas virtuales a partir de la plantilla anterior).
 * **Crear una regla de firewall para permitir el tráfico (80/tcp)**. Notar que en Google Cloud Platform ya se tiene un Firewall con una configuración predeterminada y hay que ajustarla a las necesidades.
 * **Crear una verificación de estado (Health Check)**. Consiste en una prueba automatizada que verifica si las máquinas virtuales están funcionando (si NGINX responde HTTP).
-* **Crea un servicio de backend (capa lógica que abstrae al Backend Real) y agrega tu grupo de instancias (máquinas virtuales) como backend al grupo de servicios de backend con el puerto nombrado (http:80)**. Es decir, hay que configurar los puertos de las máquinas virtuales para que sean visibles por el balanceador de cargas, crear el Servicio de Backend, agregar las máquinas virtuales al Service Backend.
+* **Crear un servicio de backend** (una capa lógica dentro del balanceador de cargas que aplica verificaciones de estado o health checks a cada máquina virtual para distribuir el tráfico), al cual se agregará el grupo de instancias (máquinas virtuales) como backend real con el puerto http:80. Es decir, hay que configurar los puertos de las máquinas virtuales para que sean visibles por el balanceador de cargas, crear el Servicio de Backend y agregar las máquinas virtuales al mismo.
 * **Crear un mapa de URL y un proxy inverso HTTP, asociarlos y enrutar las solicitudes entrantes al servicio de backend.**
 * **Crea una regla de reenvío** (indica a dónde debe ir el tráfico que le llega al balanceador de cargas).
 
@@ -61,6 +61,18 @@ Flujo:
 4.	Se selecciona a una VM que se encarga de responder al usuario.
 5.	Respuesta enviada al usuario.
 
+```mermaid
+graph TD;
+    Usuario -->|HTTP| A(Forwarding Rule)
+    
+    subgraph "Balanceador de Carga"
+        A -->|Dirige tráfico HTTP| B[HTTP Reverse Proxy]
+        B -->|Redirige según reglas| C[URL Map]
+        C -->|Envía tráfico| D[Backend Service]
+    end
+    
+    D -->|Distribuye carga| E(Backend Real - VMs)
+```
 
 ## Pasos detallados que fueron realizados en el Lab
 1. Definir variables de entorno (accesibles dentro de la misma sesión de terminal y se usan para evitar repetir valores en los comandos.)
@@ -299,7 +311,7 @@ gcloud compute target-http-proxies create http-lb-proxy \
 
 13.  Crear la regla de reenvío (forwarding rule)
 ```
-gcloud compute create forwarding-rules create http-content-rule \
+gcloud compute forwarding-rules create http-content-rule \
       --global \
       --target-http-proxy http-lb-proxy \
       --ports 80
