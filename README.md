@@ -1,5 +1,8 @@
 # Laboratorio Práctico de Google Cloud Platform (GCP) : "Implement Load Balancing on Compute Engine"
-Se ha realizado un laboratorio práctico en Google Cloud Platform (GCP) en el que se implementó un balanceador de cargas.
+
+## Introducción
+Este documento describe el proceso de implementación de un balanceador de carga en Google Cloud Platform (GCP), detallando cada paso y los comandos utilizados. Es parte de un laboratorio práctico en el que se configuró una infraestructura tolerante a fallos basada en instancias de máquinas virtuales ejecutando NGINX.
+
 ## ¿Qué es un Balanceador de Cargas (Load Balancing)?
 Un balanceador de carga es un dispositivo o software que distribuye el tráfico de red o las solicitudes de aplicación entre múltiples servidores o recursos disponibles, con el objetivo de optimizar el rendimiento, mejorar la disponibilidad y garantizar la tolerancia a fallos.
 
@@ -10,9 +13,9 @@ Definición de Google : *" The job of a load balancer is to distribute user traf
 ![Definición de Load Balancer por Google](https://github.com/user-attachments/assets/fadbcc68-ef1d-479c-b09c-b7c82a8cea9f)
 
 En este caso, es un servicio brindado por Google Cloud Platform, compuesto por:
-* forwarding rule (recibe el tráfico HTTP (puerto 80) e indica hacia dónde enviarlo: al proxy inverso HTTP. No decide directamente a qué VM o backend va el tráfico, esa decisión la toma el proxy y el URL Map.)
-* proxy HTTP (recibe las peticiones HTTP y las reenvía al URL MAP, es un puente entre el balanceador de carga y los Servidores del Backend).
-* URL MAP (indica a dónde deben llegar las solicitudes, en este caso al Backend Service)
+* Forwarding Rule (recibe el tráfico HTTP (puerto 80) e indica hacia dónde enviarlo: al proxy inverso HTTP. No decide directamente a qué VM o backend va el tráfico, esa decisión la toma el proxy y el URL Map.)
+* Proxy HTTP (recibe las peticiones HTTP y las reenvía al URL MAP, es un puente entre el balanceador de carga y los Servidores del Backend).
+* URL Map (indica a dónde deben llegar las solicitudes, en este caso al Backend Service)
 * Backend Service (Capa lógica que le dice al balanceador cómo distribuir el tráfico entre las VMs). 
 
 ## Descripción general de las tareas a realizar en el Lab
@@ -26,8 +29,8 @@ Se debía:
 
 ### Tarea 2. Configura un balanceador de cargas HTTP
 Consiste en entregar un sitio web por medio de servidores web de NGINX, asegurando que el entorno sea tolerante a errores. Es por eso, que se crea un balanceador de cargas HTTP con un grupo de instancias de 2 servidores web de NGINX. 
-Se debía realizar lo siguiente:
-* Crear un script que será invocado más tarde para su ejecución, que va a permitir la instalación y configuración de NGINX en máquinas virtuales:
+Se debían realizar los siguientes pasos::
+* Crear un script que permitirá la instalación y configuración de NGINX en máquinas virtuales y será ejecutado más adelante:
 ```
 cat << EOF > startup.sh
 #! /bin/bash
@@ -156,7 +159,7 @@ gcloud compute instance-templates create web-server-template \
 > [!NOTE]
 > Un template de instancia es una plantilla que define la configuración base que van a tener las máquinas virtuales (VMs) a crear.
 > No crea VMs, solo guarda la configuración para usarse después.
-> Permite crear múltiples VMs con la misma configuración de forma automática. Es decir, si se necesita escalar el número de servidores, se puede usar este template sin definir los parámetros una y otra vez.
+> Permite crear múltiples VMs con la misma configuración de forma automática. Si se necesita escalar el número de servidores, se puede usar esta plantilla sin redefinir los parámetros cada vez.
 
 5. Crear de un Grupo de Instancias
 ```
@@ -291,7 +294,8 @@ gcloud compute target-http-proxies create http-lb-proxy \
 
 > [!NOTE]
 > Proxy inverso: Es un intermediario que recibe solicitudes y las reenvía o distribuye entre los servidores internos
-> (en este caso, sobre el Backend Service). 
+> (en este caso, sobre el Backend Service).
+> Un proxy normal recibe las solicitudes de un usuario y las reenvía a Internet, ocultando la identidad del usuario. Un proxy inverso, en cambio, recibe las solicitudes en nombre de los servidores internos y decide a cuál de ellos enviarlas. En este caso, el balanceador de carga actúa como proxy inverso
 
 13.  Crear la regla de reenvío (forwarding rule)
 ```
@@ -314,3 +318,6 @@ Con este comando se está definiendo la regla de forwarding (de reenvío) que de
 gcloud compute forwarding-rules list
 ```
 Con esta instrucción, se muestran todas las reglas de forwarding creadas en GCP.Por lo tanto, permite verificar que la regla http-content-rule se creó correctamente.
+
+## Conclusión
+Con este laboratorio, se logró implementar un balanceador de carga en Google Cloud Platform utilizando una configuración basada en NGINX. Se demostraron conceptos clave como la distribución de tráfico, la redundancia y la configuración de firewall, lo que permite una arquitectura escalable y tolerante a fallos.
