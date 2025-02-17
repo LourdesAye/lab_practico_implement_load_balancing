@@ -1,7 +1,65 @@
 # Laboratorio Práctico de Google Cloud Platform (GCP) : "Implement Load Balancing on Compute Engine"
 Se ha realizado un laboratorio práctico en Google Cloud Platform (GCP) en el que se implementó un balanceador de cargas.
+## ¿Qué es un Balanceador de Cargas (Load Balancing)?
+Un balanceador de carga es un dispositivo o software que distribuye el tráfico de red o las solicitudes de aplicación entre múltiples servidores o recursos disponibles, con el objetivo de optimizar el rendimiento, mejorar la disponibilidad y garantizar la tolerancia a fallos.
 
-## Pasos Realizados
+![Esquema en el que se aplica Load Balancer](https://github.com/user-attachments/assets/8cfabbbf-a56c-4208-a85e-c46aa4ed810a)
+
+Definición de Google : *" The job of a load balancer is to distribute user traffic across multiple instances of an application. By spreading the load, load balancing reduces the risk that applications experience performance issues."*
+
+![Definición de Load Balancer por Google](https://github.com/user-attachments/assets/fadbcc68-ef1d-479c-b09c-b7c82a8cea9f)
+
+En este caso, es un servicio brindado por Google Cloud Platform, compuesto por:
+* forwarding rule (recibe el tráfico HTTP (puerto 80) e indica hacia dónde enviarlo: al proxy inverso HTTP. No decide directamente a qué VM o backend va el tráfico, esa decisión la toma el proxy y el URL Map.)
+* proxy HTTP (recibe las peticiones HTTP y las reenvía al URL MAP, es un puente entre el balanceador de carga y los Servidores del Backend).
+* URL MAP (indica a dónde deben llegar las solicitudes, en este caso al Backend Service)
+* Backend Service (Capa lógica que le dice al balanceador cómo distribuir el tráfico entre las VMs). 
+
+## Descripción general de las tareas a realizar en el Lab
+Las tareas que se llevaron adelante: 
+### Tarea 1. Crear una instancia de máquina virtual para el proyecto. 
+Se debía:
+* Asígnar el nombre a la instancia.
+* Crear la instancia en la zona.
+* Usar un tipo de máquina e2-micro.
+* Usar el tipo de imagen predeterminado (Debian Linux).
+
+### Tarea 2. Configura un balanceador de cargas HTTP
+Consiste en entregar un sitio web por medio de servidores web de NGINX, asegurando que el entorno sea tolerante a errores. Es por eso, que se crea un balanceador de cargas HTTP con un grupo de instancias de 2 servidores web de NGINX. 
+Se debía realizar lo siguiente:
+* Crear un script que será invocado más tarde para su ejecución, que va a permitir la instalación y configuración de NGINX en máquinas virtuales:
+```
+cat << EOF > startup.sh
+#! /bin/bash
+apt-get update
+apt-get install -y nginx
+service nginx start
+sed -i -- 's/nginx/Google Cloud Platform - '"\$HOSTNAME"'/' /var/www/html/index.nginx-debian.html
+EOF
+```
+* Crear una plantilla de instancias (consiste en establecer la configuración de un conjunto de máquinas virtuales, que van a trabajar juntas como si fueran un único sistema, a aprtir del script).
+* Crear un grupo de instancias administrado basado en la plantilla (Consiste en crear un grupo de instancias de máquinas virtuales a partir de la plantilla anterior).
+* Crear una regla de firewall para permitir el tráfico (80/tcp). Notar que en Google Cloud Platform ya se tiene un Firewall con una configuración predeterminada y hay que ajustarla a las necesidades.
+* Crear una verificación de estado (Healt Check). Consiste en una prueba automatizada que verifica si las máquinas virtuales están funcionando (si NGINX responde HTTP).
+* Crea un servicio de backend (capa lógica que abstrae al Backend Real) y agrega tu grupo de instancias (máquinas virtuales) como backend al grupo de servicios de backend con el puerto nombrado (http:80). Es decir, hay que configurar los puertos de las máquinas virtuales para que sean visibles por el balanceador de cargas, crear el Servicio de Backend, agregar las máquinas virtuales al Service Backend.
+* Crear un mapa de URL y un proxy inverso HTTP, asociarlos y enrutar las solicitudes entrantes al servicio de backend.
+* Crea una regla de reenvío (indica a dónde debe ir el tráfico que le llega al balanceador de cargas).
+
+Flujo:
+1.	Usuario en navegador haciendo las peticiones HTTP (ingresar a un sitio web) 
+2.	Ahora entra en acción el Balanceador de carga:
+    1.	forwarding rule: Recibe la solicitud HTTP y la pasa al proxy inverso HTTP
+    2.	proxy inverso HTTP: consulta el URL Map para ver a dónde debe ir el tráfico. 
+    3.	URL MAP: dice que la solicitud debe ir al Backend Service.
+    4.	Backend Service: distribuye el tráfico a las VMs.
+3.	Grupo de VMs que ejecutan NGINX y que responden con la página web (a ellas se les aplica el Healt Check para verificar si funcionan de manera adecuada): 
+    1.	VM 1 (con NGINX)  
+    2.	VM 2 (con NGINX)
+4.	Se selecciona a una VM que se encarga de responder al usuario.
+5.	Respuesta enviada al usuario.
+
+
+## Pasos detallados que fueron realizados en el Lab
 1. Definir variables de entorno (accesibles dentro de la misma sesión de terminal y se usan para evitar repetir valores en los comandos.)
 ```
 export INSTANCE=nucleus-jumphost-624 
