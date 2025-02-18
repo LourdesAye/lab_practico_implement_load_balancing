@@ -5,30 +5,30 @@ Este documento describe el proceso de implementación de un balanceador de carga
 
 ### Detalles de la ejecución de comandos
 
-* Opción 1: Ejecutar comandos manualmente (Se deben ingresar los comandos uno por uno en la Google Cloud Shell.)
+* **Opción 1**: Ejecutar comandos manualmente (Se deben ingresar los comandos uno por uno en la Google Cloud Shell.)  
 📄 Archivo: [Comandos para la Implementación de Balanceo de Carga en Compute Engine.txt](https://github.com/LourdesAye/lab_practico_implement_load_balancing/blob/28dc06ad0c7f52fdc1c2ac49cba9aa8e5b54f6a1/Comandos%20para%20la%20Implementaci%C3%B3n%20de%20Balanceo%20de%20Carga%20en%20Compute%20Engine.txt)
 
-* Opción 2: Ejecutar el script automáticamente
+* **Opción 2**: Ejecutar el script automáticamente  
 📄 Archivo: [despliegue_gcp.sh](https://github.com/LourdesAye/lab_practico_implement_load_balancing/blob/28dc06ad0c7f52fdc1c2ac49cba9aa8e5b54f6a1/Comandos%20para%20la%20implementaci%C3%B3n%20del%20Balanceador%20de%20Cargas.sh)
 
-Este script automatiza la ejecución de los comandos necesarios para configurar el balanceador de carga. Antes de ejecutarlo, es necesario definir las variables de entorno:
+  Este script automatiza la ejecución de los comandos necesarios para configurar el balanceador de carga. Antes de ejecutarlo, es necesario definir las variables de entorno:
 
-```
-# Reemplaza los valores según los indicados en el laboratorio antes de ejecutar
-export INSTANCE="TU_VALOR_AQUI"  # Ejemplo: nucleus-jumphost-624
-export FIREWALL="TU_VALOR_AQUI"  # Ejemplo: accept-tcp-rule-112
-export ZONE="TU_VALOR_AQUI"      # Ejemplo: us-east1-c
-```
+    ```
+    # Reemplaza los valores según los indicados en el laboratorio antes de ejecutar
+    export INSTANCE="TU_VALOR_AQUI"  # Ejemplo: nucleus-jumphost-624
+    export FIREWALL="TU_VALOR_AQUI"  # Ejemplo: accept-tcp-rule-112
+    export ZONE="TU_VALOR_AQUI"      # Ejemplo: us-east1-c
+    ```
 
-Finalmente, descarga y ejecuta el script con estos comandos:
-```
-curl -LO https://github.com/LourdesAye/lab_practico_implement_load_balancing/blob/main/Comandos%20para%20la%20implementaci%C3%B3n%20del%20Balanceador%20de%20Cargas.sh
-chmod +x despliegue_gcp.sh
-./despliegue_gcp.sh
-```
-* curl -LO URL :Descarga el script desde GitHub y lo guarda con su nombre original.
-* chmod +x despliegue_gcp.sh → Asigna permisos de ejecución al script.
-* ./despliegue_gcp.sh → Ejecuta el script en la terminal.
+    Finalmente, descarga y ejecuta el script con estos comandos:
+    ```
+    curl -LO https://github.com/LourdesAye/lab_practico_implement_load_balancing/blob/main/Comandos%20para%20la%20implementaci%C3%B3n%20del%20Balanceador%20de%20Cargas.sh
+    chmod +x despliegue_gcp.sh
+    ./despliegue_gcp.sh
+    ```
+    * curl -LO URL :Descarga el script desde GitHub y lo guarda con su nombre original.
+    * chmod +x despliegue_gcp.sh → Asigna permisos de ejecución al script.
+    * ./despliegue_gcp.sh → Ejecuta el script en la terminal.
 
 ## ¿Qué es un Balanceador de Cargas (Load Balancing)?
 Un balanceador de carga es un dispositivo o software que distribuye el tráfico de red o las solicitudes de aplicación entre múltiples servidores o recursos disponibles, con el objetivo de optimizar el rendimiento, mejorar la disponibilidad y garantizar la tolerancia a fallos.
