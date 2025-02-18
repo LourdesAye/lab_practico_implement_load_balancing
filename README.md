@@ -1,7 +1,7 @@
 # Laboratorio Práctico de Google Cloud Platform (GCP) : "Implementación de Balanceo de Carga en Compute Engine" (Implement Load Balancing on Compute Engine). 
 
 ## Introducción
-Este documento describe el proceso de implementación de un balanceador de carga en Google Cloud Platform (GCP), detallando cada paso y los comandos utilizados. Es parte de un laboratorio práctico en el que se configuró una infraestructura tolerante a fallos basada en instancias de máquinas virtuales ejecutando NGINX.
+Este documento describe el proceso de implementación de un balanceador de carga en Google Cloud Platform (GCP), detallando cada paso y los comandos empleados. Es parte de un laboratorio práctico en el que se configuró una infraestructura tolerante a fallos basada en instancias de máquinas virtuales ejecutando NGINX.
 
 ## ¿Qué es un Balanceador de Cargas (Load Balancing)?
 Un balanceador de carga es un dispositivo o software que distribuye el tráfico de red o las solicitudes de aplicación entre múltiples servidores o recursos disponibles, con el objetivo de optimizar el rendimiento, mejorar la disponibilidad y garantizar la tolerancia a fallos.
@@ -30,7 +30,7 @@ Se debía
 ### Tarea 2. Configura un balanceador de cargas HTTP
 Consiste en servir un sitio web a través de servidores NGINX, asegurando que el entorno sea tolerante a errores. Por ello, se crea un balanceador de cargas HTTP con un grupo de instancias de 2 servidores web de NGINX. 
 Los pasos a seguir fueron los siguientes:
-* Crear un script que permitirá la instalación y configuración de NGINX en máquinas virtuales y será ejecutado más adelante:
+* Crear un script para instalar y configurar NGINX en las máquinas virtuales, que se ejecutará más adelante: 
 ```
 cat << EOF > startup.sh
 #! /bin/bash
@@ -44,11 +44,11 @@ EOF
 * **Crear un grupo de instancias administrado basado en la plantilla** (Consiste en crear un grupo de instancias de máquinas virtuales a partir de la plantilla anterior).
 * **Crear una regla de firewall para permitir el tráfico (80/tcp)**. Notar que en Google Cloud Platform ya se tiene un Firewall con una configuración predeterminada y hay que ajustarla a las necesidades.
 * **Crear una verificación de estado (Health Check)**. Consiste en una prueba automatizada que verifica si las máquinas virtuales están funcionando (si NGINX responde HTTP).
-* **Crear un servicio de backend** (una capa lógica dentro del balanceador de cargas que aplica verificaciones de estado o health checks a cada máquina virtual para distribuir el tráfico), al cual se agregará el grupo de instancias (máquinas virtuales) como backend real con el puerto http:80. Es decir, hay que configurar los puertos de las máquinas virtuales para que sean visibles por el balanceador de cargas, crear el Servicio de Backend y agregar las máquinas virtuales al mismo.
+* **Crear un servicio de backend** (una capa lógica dentro del balanceador de cargas que aplica verificaciones de estado o health checks a cada máquina virtual para distribuir el tráfico), al cual se agregará el grupo de instancias (máquinas virtuales) como backend real con el puerto http:80. Es decir, hay que configurar los puertos de las máquinas virtuales para que sean accesibles desde el balanceador de carga, crear el Servicio de Backend y agregarle las máquinas virtuales.
 * **Crear un mapa de URL y un proxy inverso HTTP, asociarlos y enrutar las solicitudes entrantes al servicio de backend.**
 * **Crea una regla de reenvío** (indica a dónde debe ir el tráfico que le llega al balanceador de cargas).
 
-Flujo:
+Flujo del proceso: 
 1.	Usuario en navegador haciendo las peticiones HTTP (ingresar a un sitio web) 
 2.	Ahora entra en acción el Balanceador de carga:
     1.	**Forwarding Rule**: Recibe la solicitud HTTP y la pasa al proxy inverso HTTP
@@ -75,7 +75,7 @@ graph TD;
 ```
 
 ## Pasos detallados que fueron realizados en el Lab
-1. Definir variables de entorno (accesibles dentro de la misma sesión de terminal y se usan para evitar repetir valores en los comandos.)
+1. Definir variables de entorno (accesibles dentro de la misma sesión de terminal y utilizadas para evitar la repetición de valores en los comandos).
 ```
 export INSTANCE=nucleus-jumphost-624 
 export FIREWALL=accept-tcp-rule-112
@@ -183,8 +183,8 @@ gcloud compute instance-groups managed create web-server-group \
 ```
 
 Aquí se están creando un grupo de instancias gestionadas (Managed Instance Group, MIG). Se trata de un conjunto de máquinas virtuales que trabajan juntas como si fueran un solo sistema.  
-Se usa para escalar automáticamente ( si el tráfico aumenta, puede crear más VMs ;  si el tráfico baja, puede eliminar VMs para ahorrar costos).  
-Las VMs dentro del grupo se crean a partir del template que se definio en el paso anterior (Paso 4).  
+Un grupo de instancias administrado (MIG) puede autoescalar y reemplazar VMs fallidas sin intervención manual, asegurando alta disponibilidad.
+Las VMs dentro del grupo se crean a partir del template que se definio en el paso anterior (Paso 4). 
 
 * web-server-group: Es el nombre del grupo de instancias.
 * --base-instance-name web-server: Define el prefijo de los nombres de las VMs. Si tiene varias instancias quedaría, por ejemplo, web-server-abc123 y web-server-def456
@@ -226,7 +226,7 @@ gcloud compute instance-groups managed \
         --named-ports http:80 \
         --region $REGION
 ```
-Este comando asigna un puerto lógico ("http") al puerto físico (80) en todas las máquinas virtuales del grupo de instancias (conjunto de VM que trabajan juntas como si fueran un solo sistema).
+Este comando asigna un puerto lógico ('http') al puerto físico (80) en todas las máquinas virtuales del grupo de instancias, que es un conjunto de VMs que operan juntas como si fueran un solo sistema.
 Es necesario para que el balanceador de carga sepa a qué puerto enviar el tráfico.
 No cambia nada dentro de las VMs, solo las hace "descubribles" por el balanceador.
 
