@@ -216,8 +216,8 @@ Un Health Check es una prueba automática que verifica si las VMs están funcion
 
 Ejemplo:  
 El health check revisa http://web-server-1/ cada 10 segundos.  
-Si devuelve 200 → ✅  → La VM está sana.  
-Si no responde  → ❌ →  Se saca del balanceador hasta que vuelva a responder.
+Si devuelve un código 200 → ✅ → La VM está en buen estado.
+Si no responde → ❌ → Se retira del balanceador hasta que vuelva a estar disponible.
 
 8. Configurar los puertos en las máquinas virtuales
 ```
