@@ -3,6 +3,34 @@
 ## Introducción
 Este documento describe el proceso de implementación de un balanceador de carga en Google Cloud Platform (GCP), detallando cada paso y los comandos empleados. Es parte de un laboratorio práctico en el que se configuró una infraestructura tolerante a fallos basada en instancias de máquinas virtuales ejecutando NGINX.
 
+### Detalles de la ejecución de comandos
+
+#### Con el archivo : "Comandos para la Implementación de Balanceo de Carga en Compute Engine.txt"
+
+En este caso, se indican cada uno de los comandos a ingresar, uno a uno en la shell de Google Cloud Platform. 
+
+#### Con el Script : "Comandos para la implementación del Balanceador de Cargas.sh"
+
+Consiste en un script, que a partir del ingreso de las variables de entorno, puede ejecutar una secuencia de instrucciones que permiten el desarrollo del laboratorio en su totalidad:
+
+Primero, definir las variables antes de correr el script:
+# Reemplaza los valores según los indicados en el laboratorio antes de ejecutar
+export INSTANCE="TU_VALOR_AQUI"  # Ejemplo: nucleus-jumphost-624
+export FIREWALL="TU_VALOR_AQUI"  # Ejemplo: accept-tcp-rule-112
+export ZONE="TU_VALOR_AQUI"      # Ejemplo: us-east1-c
+
+Finalmente , descargar y ejecutar el script con estos comandos:
+curl -LO https://github.com/LourdesAye/lab_practico_implement_load_balancing/blob/main/Comandos%20para%20la%20implementaci%C3%B3n%20del%20Balanceador%20de%20Cargas.sh
+chmod +x despliegue_gcp.sh
+./despliegue_gcp.sh
+
+* curl: para transferir datos desde o hacia un servidor.
+* -LO: para que se guarde el archivo con su nombre original
+* https://github.com/LourdesAye/lab_practico_implement_load_balancing/blob/main/Comandos%20para%20la%20implementaci%C3%B3n%20del%20Balanceador%20de%20Cargas.sh: URL de descarga del script desde GitHub.
+* chmod (change mode) : cambia los permisos de un archivo.
+* +x agrega permisos de ejecución, permitiendo que el script pueda ejecutarse como un programa.
+* ./despliegue_gcp.sh : indica que el archivo se encuentra en el directorio actual y que puede ejecutarse. 
+
 ## ¿Qué es un Balanceador de Cargas (Load Balancing)?
 Un balanceador de carga es un dispositivo o software que distribuye el tráfico de red o las solicitudes de aplicación entre múltiples servidores o recursos disponibles, con el objetivo de optimizar el rendimiento, mejorar la disponibilidad y garantizar la tolerancia a fallos.
 
