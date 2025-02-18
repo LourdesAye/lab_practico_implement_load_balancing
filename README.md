@@ -1,4 +1,4 @@
-# Laboratorio Práctico de Google Cloud Platform (GCP) : "Implement Load Balancing on Compute Engine"
+# Laboratorio Práctico de Google Cloud Platform (GCP) : "Implementación de Balanceo de Carga en Compute Engine" (Implement Load Balancing on Compute Engine). 
 
 ## Introducción
 Este documento describe el proceso de implementación de un balanceador de carga en Google Cloud Platform (GCP), detallando cada paso y los comandos utilizados. Es parte de un laboratorio práctico en el que se configuró una infraestructura tolerante a fallos basada en instancias de máquinas virtuales ejecutando NGINX.
@@ -8,7 +8,7 @@ Un balanceador de carga es un dispositivo o software que distribuye el tráfico 
 
 ![Esquema en el que se aplica Load Balancer](https://github.com/user-attachments/assets/8cfabbbf-a56c-4208-a85e-c46aa4ed810a)
 
-Definición de Google : *" The job of a load balancer is to distribute user traffic across multiple instances of an application. By spreading the load, load balancing reduces the risk that applications experience performance issues."*
+Definición de Google: *" The job of a load balancer is to distribute user traffic across multiple instances of an application. By spreading the load, load balancing reduces the risk that applications experience performance issues."*
 
 ![Definición de Load Balancer por Google](https://github.com/user-attachments/assets/fadbcc68-ef1d-479c-b09c-b7c82a8cea9f)
 
@@ -16,20 +16,20 @@ En este caso, es un servicio brindado por Google Cloud Platform, compuesto por:
 * **Forwarding Rule** (recibe el tráfico HTTP (puerto 80) e indica hacia dónde enviarlo: al proxy inverso HTTP. No decide directamente a qué VM o backend va el tráfico, esa decisión la toma el proxy y el URL Map.)
 * **Proxy HTTP** (recibe las peticiones HTTP y las reenvía al URL MAP, es un puente entre el balanceador de carga y los Servidores del Backend).
 * **URL Map** (indica a dónde deben llegar las solicitudes, en este caso al Backend Service)
-* **Backend Service** (Capa lógica que le dice al balanceador cómo distribuir el tráfico entre las VMs). 
+* **Backend Service** (capa lógica que define cómo se distribuye el tráfico entre las VMs.). 
 
 ## Descripción general de las tareas a realizar en el Lab
 Las tareas que se llevaron adelante: 
 ### Tarea 1. Crear una instancia de máquina virtual para el proyecto. 
-Se debía:
-* Asígnar el nombre a la instancia.
+Se debía
+* Asignar el nombre a la instancia.
 * Crear la instancia en la zona.
 * Usar un tipo de máquina e2-micro.
 * Usar el tipo de imagen predeterminado (Debian Linux).
 
 ### Tarea 2. Configura un balanceador de cargas HTTP
-Consiste en entregar un sitio web por medio de servidores web de NGINX, asegurando que el entorno sea tolerante a errores. Es por eso, que se crea un balanceador de cargas HTTP con un grupo de instancias de 2 servidores web de NGINX. 
-Se debían realizar los siguientes pasos::
+Consiste en servir un sitio web a través de servidores NGINX, asegurando que el entorno sea tolerante a errores. Por ello, se crea un balanceador de cargas HTTP con un grupo de instancias de 2 servidores web de NGINX. 
+Los pasos a seguir fueron los siguientes:
 * Crear un script que permitirá la instalación y configuración de NGINX en máquinas virtuales y será ejecutado más adelante:
 ```
 cat << EOF > startup.sh
@@ -166,7 +166,7 @@ gcloud compute instance-templates create web-server-template \
 * web-server-template: Es el nombre del template (puede tener cualquier nombre).
 * --metadata-from-file startup-script=startup.sh: permite incluir un script de inicio (startup.sh, el cual fue creado en el paso 3, el paso anterior) que se ejecutará cuando una VM arranque. Este script permite instalar y configurar Nginx en la máquina virtual (MV).
 * --machine-type e2-medium: Define el tipo de máquina virtual (2 vCPUs y 4GB de RAM).
-* --region $REGION: Especifica la región donde se creará la instancia cuando se use el template.\
+* --region $REGION: Especifica la región donde se creará la instancia cuando se use el template.
 
 > [!NOTE]
 > Un template de instancia es una plantilla que define la configuración base que van a tener las máquinas virtuales (VMs) a crear.
@@ -204,7 +204,7 @@ gcloud compute firewall-rules create $FIREWALL \
 ```  
 Un firewall es un sistema de seguridad que filtra y controla el tráfico de red basado en reglas.  
 En Google Cloud hay un firewall predeterminado que bloquea casi todo el tráfico excepto SSH, RDP y ICMP.    
-El comando expresado permite crear una nueva regla para permitir tráfico HTTP en el puerto 80.  
+Este comando crea una regla para habilitar el tráfico HTTP en el puerto 80.
 
 En Google Cloud Platform, cada cuenta tiene una red predeterminada llamada "default". Es la red en la que se crean todos los recursos (VMs, balanceadores de cargas, etcétera) en caso de no especificar otra.  
 
